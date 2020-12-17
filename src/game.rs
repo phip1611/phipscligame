@@ -4,19 +4,26 @@ use crate::component::{RefreshableComponent};
 use std::io::stdout;
 use crossterm::ExecutableCommand;
 use crossterm::terminal::{Clear, ClearType};
+use gilrs::{GamepadId, Gilrs};
+use gilrs::ff::{EffectBuilder, BaseEffect, BaseEffectType, Replay, Ticks};
+use std::thread::{sleep, spawn};
+use std::time::Duration;
+use std::sync::{Mutex, Arc};
 
-pub const COIN_COUNT: usize = 1;
+pub const COIN_COUNT: usize = 17;
 
 #[derive(Debug)]
 pub struct Game {
     state: GameState,
     field: GameField,
     is_initial_refresh: bool,
+    gamepad_id: GamepadId,
+    gilrs: Arc<Mutex<Gilrs>>,
 }
 
 impl Game {
 
-    pub fn new(cols: u8, rows: u8) -> Self {
+    pub fn new(cols: u8, rows: u8, gilrs: Arc<Mutex<Gilrs>>, gamepad_id: GamepadId) -> Self {
         let mut gf = GameField::new(cols, rows);
         stdout().execute(Clear(ClearType::All)).unwrap();
         gf.init();
@@ -24,6 +31,8 @@ impl Game {
             state: GameState::new(cols),
             field: gf,
             is_initial_refresh: true,
+            gamepad_id,
+            gilrs,
         }
     }
 
@@ -66,14 +75,64 @@ impl Game {
         self.state.won()
     }
 
+    fn gamepad_do_coin_ff_effect(&mut self) {
+        let id = self.gamepad_id;
+        let gilrs = self.gilrs.clone();
+        spawn(move || {
+            let mut gilrs = gilrs.lock().unwrap();
+            let duration = Ticks::from_ms(250);
+            let effect = EffectBuilder::new()
+                .add_effect(BaseEffect {
+                    kind: BaseEffectType::Weak { magnitude: u16::MAX },
+                    scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
+                    envelope: Default::default(),
+                })
+                .gamepads(&vec![id])
+                .finish(&mut gilrs).unwrap();
+            effect.play().unwrap();
+            sleep(Duration::from_millis(250));
+            effect.stop().unwrap();
+        });
+    }
+
+    fn gamepad_do_barrier_ff_effect(&mut self) {
+        let id = self.gamepad_id;
+        let gilrs = self.gilrs.clone();
+        spawn(move || {
+            let mut gilrs = gilrs.lock().unwrap();
+            let duration = Ticks::from_ms(500);
+            let effect = EffectBuilder::new()
+                .add_effect(BaseEffect {
+                    kind: BaseEffectType::Strong { magnitude: u16::MAX },
+                    scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
+                    envelope: Default::default(),
+                })
+                .gamepads(&vec![id])
+                .finish(&mut gilrs).unwrap();
+            effect.play().unwrap();
+            sleep(Duration::from_millis(500));
+            effect.stop().unwrap();
+        });
+    }
+
     fn inc_if_necessary(&mut self, res: Result<FieldType, FieldType>) {
         match res {
             Ok(field) => {
                 if field == FieldType::Coin {
-                    self.state.coins_inc()
+                    self.state.coins_inc();
+                    self.gamepad_do_coin_ff_effect();
                 }
             }
-            Err(_) => {}
+            Err(field) => {
+                match field {
+                    FieldType::Space => {}
+                    FieldType::Player => {}
+                    FieldType::Barrier => {
+                        self.gamepad_do_barrier_ff_effect()
+                    }
+                    FieldType::Coin => {}
+                }
+            }
         }
     }
 }
