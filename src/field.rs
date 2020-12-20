@@ -59,12 +59,12 @@ impl GameField {
     }
 
     /// Getter for [`rows`]
-    fn rows(&self) -> usize {
+    pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Getter for [`cols`]
-    fn cols(&self) -> usize {
+    pub fn cols(&self) -> usize {
         self.cols
     }
 

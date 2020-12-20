@@ -13,7 +13,7 @@ to your system, e.g. via bluetooth.
 
 ### Screenshot
 - Player (X) is red
-- Coins (C) are yellow/godl
+- Coins (C) are yellow/gold
 - Barriers are white
 
 ![game screenshot](screenshot.png "Game screenshot")

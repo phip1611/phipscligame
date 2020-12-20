@@ -10,7 +10,7 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 use std::sync::{Mutex, Arc};
 
-pub const COIN_COUNT: usize = 17;
+pub const COIN_COUNT: usize = 1;
 
 #[derive(Debug)]
 pub struct Game {
@@ -141,6 +141,16 @@ impl Game {
                 }
             }
         }
+    }
+
+    /// Getter for [`cols`].
+    pub fn cols(&self) -> usize {
+        self.field.cols()
+    }
+
+    /// Getter for [`rows`].
+    pub fn rows(&self) -> usize {
+        self.field.rows()
     }
 }
 

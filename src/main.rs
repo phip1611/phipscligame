@@ -74,6 +74,12 @@ fn main() {
             game.move_player_right();
         }
     }
+
+    // Refresh one finally time in the end when
+    game.refresh();
+    let won_txt = "YOU WON!";
+    let times = game.cols() / 2 - won_txt.len() / 2;
+    println!("{}YOU WON!", " ".repeat(times));
 }
 
 fn next_gamepad_button_event_blocking(gilrs: &mut Gilrs) -> gilrs::Event {
