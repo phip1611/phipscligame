@@ -54,40 +54,61 @@ fn main() {
         let mut left_must_be_released = false;
         let mut down_must_be_released = false;
         let mut right_must_be_released = false;
-        let is_up;
-        let is_left;
-        let is_down;
-        let is_right;
+        let mut is_up = false;
+        let mut is_left= false;
+        let mut is_down= false;
+        let mut is_right= false;
         // release lock afterwards
         {
             let mut gilrs = gilrs.lock().unwrap();
             let event = next_gamepad_button_event_blocking(&mut gilrs);
 
-            if let EventType::ButtonReleased(btn, _) = event.event {
+            if let EventType::ButtonPressed(btn, _) = event.event {
+                // println!("Button {:#?} pressed!", btn);
+                if btn == Button::North || btn == Button::DPadUp {
+                    if !up_must_be_released {
+                        is_up = true;
+                        up_must_be_released = true;
+                    }
+                }
+                else if btn == Button::West || btn == Button::DPadLeft {
+                    if !left_must_be_released {
+                        is_left = true;
+                        left_must_be_released = true;
+                    }
+                }
+                else if btn == Button::South || btn == Button::DPadDown {
+                    if !down_must_be_released {
+                        is_down = true;
+                        down_must_be_released = true;
+                    }
+                }
+                else if btn == Button::East || btn == Button::DPadRight {
+                    if !right_must_be_released {
+                        is_right = true;
+                        right_must_be_released = true;
+                    }
+                }
+            }
+            else if let EventType::ButtonReleased(btn, _) = event.event {
+                // println!("Button {:#?} released!", btn);
                 if btn == Button::North || btn == Button::DPadUp {
                     up_must_be_released = false;
+                    is_up = false;
                 }
                 else if btn == Button::West || btn == Button::DPadLeft {
                     left_must_be_released = false;
+                    is_left = false;
                 }
                 else if btn == Button::South || btn == Button::DPadDown {
                     down_must_be_released = false;
+                    is_down = false;
                 }
                 else if btn == Button::East || btn == Button::DPadRight {
                     right_must_be_released = false;
+                    is_right = false;
                 }
             }
-
-            let gamepad = gilrs.gamepad(event.id);
-            is_up = !up_must_be_released && (gamepad.is_pressed(Button::North) || gamepad.is_pressed(Button::DPadUp));
-            is_left = !left_must_be_released && (gamepad.is_pressed(Button::West) || gamepad.is_pressed(Button::DPadLeft));
-            is_down = !down_must_be_released && (gamepad.is_pressed(Button::South) || gamepad.is_pressed(Button::DPadDown));
-            is_right = !right_must_be_released && (gamepad.is_pressed(Button::East) || gamepad.is_pressed(Button::DPadRight));
-
-            if is_up { up_must_be_released = true; }
-            if is_left { left_must_be_released = true; }
-            if is_down { down_must_be_released = true; }
-            if is_right { right_must_be_released = true; }
         };
 
         if is_up {
