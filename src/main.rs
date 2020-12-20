@@ -49,7 +49,6 @@ fn main() {
     while !game.won() {
         game.refresh();
 
-        // prevent nested lock
         let mut up_must_be_released = false;
         let mut left_must_be_released = false;
         let mut down_must_be_released = false;
@@ -58,7 +57,8 @@ fn main() {
         let mut is_left= false;
         let mut is_down= false;
         let mut is_right= false;
-        // release lock afterwards
+
+        // prevent nested lock
         {
             let mut gilrs = gilrs.lock().unwrap();
             let event = next_gamepad_button_event_blocking(&mut gilrs);
@@ -110,6 +110,7 @@ fn main() {
                 }
             }
         };
+        // release lock afterwards
 
         if is_up {
             game.move_player_up();

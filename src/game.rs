@@ -79,16 +79,19 @@ impl Game {
         let id = self.gamepad_id;
         let gilrs = self.gilrs.clone();
         spawn(move || {
-            let mut gilrs = gilrs.lock().unwrap();
-            let duration = Ticks::from_ms(250);
-            let effect = EffectBuilder::new()
-                .add_effect(BaseEffect {
-                    kind: BaseEffectType::Weak { magnitude: u16::MAX },
-                    scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
-                    envelope: Default::default(),
-                })
-                .gamepads(&vec![id])
-                .finish(&mut gilrs).unwrap();
+            // fast release lock
+            let effect = {
+                let mut gilrs = gilrs.lock().unwrap();
+                let duration = Ticks::from_ms(250);
+                EffectBuilder::new()
+                    .add_effect(BaseEffect {
+                        kind: BaseEffectType::Weak { magnitude: u16::MAX },
+                        scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
+                        envelope: Default::default(),
+                    })
+                    .gamepads(&vec![id])
+                    .finish(&mut gilrs).unwrap()
+            };
             effect.play().unwrap();
             sleep(Duration::from_millis(250));
             effect.stop().unwrap();
@@ -99,16 +102,20 @@ impl Game {
         let id = self.gamepad_id;
         let gilrs = self.gilrs.clone();
         spawn(move || {
-            let mut gilrs = gilrs.lock().unwrap();
-            let duration = Ticks::from_ms(500);
-            let effect = EffectBuilder::new()
-                .add_effect(BaseEffect {
-                    kind: BaseEffectType::Strong { magnitude: u16::MAX },
-                    scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
-                    envelope: Default::default(),
-                })
-                .gamepads(&vec![id])
-                .finish(&mut gilrs).unwrap();
+            // fast release lock
+            let effect = {
+                let mut gilrs = gilrs.lock().unwrap();
+                let duration = Ticks::from_ms(500);
+                EffectBuilder::new()
+                    .add_effect(BaseEffect {
+                        kind: BaseEffectType::Strong { magnitude: u16::MAX },
+                        scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
+                        envelope: Default::default(),
+                    })
+                    .gamepads(&vec![id])
+                    .finish(&mut gilrs).unwrap()
+            };
+
             effect.play().unwrap();
             sleep(Duration::from_millis(500));
             effect.stop().unwrap();
