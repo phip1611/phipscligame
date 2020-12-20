@@ -205,6 +205,7 @@ impl FieldType {
             FieldType::Coin => {
                 stdout()
                     .execute(SetAttribute(Attribute::Bold)).unwrap()
+                    // .execute(SetAttribute(Attribute::SlowBlink)).unwrap()
                     .execute(SetForegroundColor(Color::Yellow)).unwrap()
                     .execute(Print(self.symbol())).unwrap()
                     .execute(ResetColor).unwrap()

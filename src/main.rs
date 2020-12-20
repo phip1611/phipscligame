@@ -1,6 +1,8 @@
 use crate::game::Game;
-use gilrs::{Button, GamepadId, Gilrs, EventType};
+use gilrs::{Button, GamepadId, Gilrs, EventType, Gamepad};
 use std::sync::{Arc, Mutex};
+use std::io::{stdin, stdout, Write};
+use std::collections::HashMap;
 
 mod component;
 mod field;
@@ -8,16 +10,8 @@ mod game;
 mod state;
 
 fn main() {
-    let gilrs = Gilrs::new().unwrap();
-    let gamepads = gilrs
-        .gamepads()
-        .filter(|(_id, gamepad)| gamepad.name().to_lowercase().contains("xbox"))
-        .map(|(id, _)| id)
-        .collect::<Vec<GamepadId>>();
-    if gamepads.len() != 1 {
-        panic!("Please connect exactly one XBox Controller Gamepad");
-    }
-    let gamepad_id = gamepads[0];
+    let mut gilrs = Gilrs::new().unwrap();
+    let gamepad_id = get_gamepad_id(&mut gilrs);
     let gilrs = Arc::new(Mutex::new(gilrs));
     let mut game = Game::new(45, 25, gilrs.clone(), gamepad_id);
 
@@ -75,11 +69,76 @@ fn main() {
         }
     }
 
-    // Refresh one finally time in the end when
+    // Refresh one final time in the end when the player won
     game.refresh();
+
+    // print won text
     let won_txt = "YOU WON!";
     let times = game.cols() / 2 - won_txt.len() / 2;
     println!("{}YOU WON!", " ".repeat(times));
+}
+
+/// Gets a valid gamepad or panics
+fn get_gamepad_id(gilrs: &mut Gilrs) -> GamepadId {
+    let pads = gilrs
+        .gamepads()
+        .map(|(_id, gamepad)| gamepad)
+        .filter(|gamepad| gamepad.is_connected())
+        .filter(|gamepad| gamepad.is_ff_supported())
+        .collect::<Vec<Gamepad>>();
+
+    if pads.is_empty() {
+        panic!("There are no connected gamepads that support force feedback!");
+    }
+
+    // if there is exactly one gamepad we just use this one
+    if pads.len() == 1 {
+        return pads[0].id();
+    }
+
+    // if there is only
+
+    println!("Found the following connected gamepads with force feedback support:");
+    for pad in &pads {
+        println!("    {}: {} ({:?})", pad.id(), pad.name(), pad.power_info());
+    }
+
+    let mut pad_map: HashMap<usize, &Gamepad> = HashMap::new();
+    pads.iter().for_each(|pad| {
+        pad_map.insert(pad.id().into(), pad);
+    });
+
+    let gamepad_id;
+
+    // Ask for gamepad id until valid
+    loop {
+        print!("Continue? (enter gamepad id) ");
+        stdout().flush().unwrap(); // print stdout
+        let mut input = String::new();
+        stdin().read_line(&mut input).unwrap();
+        // removes "\n" from input; on windows also \r
+        input = input.replace('\r', "");
+        input = input.replace('\n', "");
+        let id = input.parse::<usize>();
+        if id.is_err() {
+            continue;
+        }
+
+        let id = id.unwrap();
+
+        // check if gamepad id is valid
+        let gamepad = pad_map.get(&id);
+        if gamepad.is_none() {
+            // Ask again
+            continue;
+        } else {
+            // found valid gamepad
+            gamepad_id = gamepad.unwrap().id();
+            break;
+        }
+    }
+
+    gamepad_id
 }
 
 fn next_gamepad_button_event_blocking(gilrs: &mut Gilrs) -> gilrs::Event {
