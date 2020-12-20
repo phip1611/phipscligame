@@ -105,10 +105,17 @@ impl Game {
             // fast release lock
             let effect = {
                 let mut gilrs = gilrs.lock().unwrap();
-                let duration = Ticks::from_ms(500);
+                let duration = Ticks::from_ms(350);
                 EffectBuilder::new()
+                    // xbox controller has two vibration motors
+                    // one left and one right; trigger both for maximum force feedback
                     .add_effect(BaseEffect {
                         kind: BaseEffectType::Strong { magnitude: u16::MAX },
+                        scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
+                        envelope: Default::default(),
+                    })
+                    .add_effect(BaseEffect {
+                        kind: BaseEffectType::Weak { magnitude: u16::MAX },
                         scheduling: Replay { play_for: duration * 1, with_delay: duration * 0, ..Default::default() },
                         envelope: Default::default(),
                     })
