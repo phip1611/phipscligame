@@ -1,9 +1,8 @@
 use rand::{thread_rng, Rng};
 use std::ops::Index;
 use std::io::stdout;
-use crossterm::cursor::{MoveLeft, MoveUp};
 use crossterm::ExecutableCommand;
-use crossterm::style::{SetAttribute, Attribute, Print, SetColors, ResetColor, SetForegroundColor, Color, SetBackgroundColor};
+use crossterm::style::{SetAttribute, Attribute, Print, ResetColor, SetForegroundColor, Color, SetBackgroundColor};
 use crate::component::{RefreshableComponent};
 use crate::game::COIN_COUNT;
 
@@ -34,7 +33,7 @@ impl GameField {
             gamefield.push(row);
         }
 
-        let mut gamefield = gamefield.into_iter()
+        let gamefield = gamefield.into_iter()
             .map(|vec| vec.into_boxed_slice())
             .collect::<Vec<Box<[FieldType]>>>()
             .into_boxed_slice();
@@ -98,10 +97,11 @@ impl GameField {
     }
 
     fn init_random_barriers(&mut self) {
+        const BARRIERS_FACTOR: f64 = 0.25_f64;
         // minus borders left/right and top/bottom minus one for player
         let usable_fields = ((self.cols() - 2)*(self.rows() - 2) - 1) as f64;
         // calculate a good amount of barriers
-        let barrier_count = (usable_fields * 0.3_f64) as usize;
+        let barrier_count = (usable_fields * BARRIERS_FACTOR) as usize;
 
         let mut actual_barrier_count = 0;
         // iterate through the complete field but without the borders

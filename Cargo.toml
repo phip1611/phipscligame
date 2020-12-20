@@ -9,5 +9,4 @@ edition = "2018"
 [dependencies]
 rand = "0.7.3"
 crossterm = "0.18.2"
-device_query = "0.1.0"
 gilrs = "0.8.0"
